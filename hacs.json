@@ -1,6 +1,6 @@
 {
   "name": "Growatt Export Controller",
-  "country": "NL",
   "render_readme": true,
-  "filename": "growatt_export_controller"
+  "domains": ["sensor", "switch", "number"],
+  "homeassistant": "2024.0.0"
 }
