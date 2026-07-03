@@ -1,0 +1,9 @@
+{
+  "domain": "growatt_export_controller",
+  "name": "Growatt Export Controller",
+  "codeowners": [],
+  "config_flow": true,
+  "iot_class": "cloud_poll",
+  "requirements": [],
+  "version": "1.4.0"
+}

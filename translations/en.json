@@ -1,0 +1,25 @@
+{
+  "title": "Growatt Export Controller",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Growatt",
+        "description": "Enter your Growatt account, the inverter serial number, and the export control settings used by the web interface.",
+        "data": {
+          "name": "Name",
+          "username": "Username",
+          "password": "Password",
+          "serial_number": "Inverter serial number",
+          "device_password_prefix": "Device password prefix",
+          "command_base_url": "Growatt command server URL",
+          "default_export_percentage": "Default export percentage",
+          "default_meter_enabled": "Default meter enabled"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to Growatt.",
+      "invalid_auth": "Invalid credentials."
+    }
+  }
+}
