@@ -1,39 +1,35 @@
 """Constants for Growatt Export Controller."""
 
-from __future__ import annotations
-
 DOMAIN = "growatt_export_controller"
-DEFAULT_NAME = "Growatt Export Controller"
-DEFAULT_COMMAND_BASE_URL = "https://server.growatt.com"
-DEFAULT_LOGIN_BASE_URL = "https://oss.growatt.com"
-DEFAULT_TIMEOUT = 30
-DEFAULT_RETRIES = 3
-DEFAULT_BACKOFF_SECONDS = 2
-DEFAULT_SERVICE_METER_ENABLED = False
-DEFAULT_EXPORT_PERCENTAGE = 100
-DEFAULT_DEVICE_PASSWORD_PREFIX = "growatt"
 
-CONF_COMMAND_BASE_URL = "command_base_url"
-CONF_LOGIN_BASE_URL = "login_base_url"
-CONF_REQUEST_TIMEOUT = "request_timeout"
-CONF_RETRY_ATTEMPTS = "retry_attempts"
-CONF_RETRY_BACKOFF_SECONDS = "retry_backoff_seconds"
+CONF_USERNAME = "username"
+CONF_PASSWORD = "password"
+CONF_INVERTER_SERIAL = "inverter_serial"
+CONF_DEVICE_PASSWORD_PREFIX = "device_password_prefix"
+CONF_COMMAND_SERVER_URL = "command_server_url"
 CONF_DEFAULT_EXPORT_PERCENTAGE = "default_export_percentage"
 CONF_DEFAULT_METER_ENABLED = "default_meter_enabled"
-CONF_SERIAL_NUMBER = "serial_number"
-CONF_DEVICE_PASSWORD_PREFIX = "device_password_prefix"
 
-ATTR_PERCENTAGE = "percentage"
-ATTR_METER_ENABLED = "meter_enabled"
-ATTR_RESPONSE = "response"
-ATTR_STATUS = "status"
-ATTR_LAST_COMMAND = "last_command"
-ATTR_LAST_ERROR = "last_error"
-ATTR_LAST_HTTP_STATUS = "last_http_status"
-ATTR_LAST_LOGIN_STATUS = "last_login_status"
-ATTR_LAST_LOGIN_RESPONSE = "last_login_response"
-ATTR_LAST_ENDPOINT = "last_endpoint"
+CONF_PRICE_SENSOR = "price_sensor"
+CONF_PRICE_THRESHOLD = "price_threshold"
+CONF_PRICE_RECOVERY_THRESHOLD = "price_recovery_threshold"
+CONF_PRICE_INCLUDE_TAX = "price_include_tax"
+CONF_PRICE_TRIGGER_METER_ENABLED = "price_trigger_meter_enabled"
+CONF_PRICE_TRIGGER_EXPORT_PERCENTAGE = "price_trigger_export_percentage"
+CONF_PRICE_NORMAL_METER_ENABLED = "price_normal_meter_enabled"
+CONF_PRICE_NORMAL_EXPORT_PERCENTAGE = "price_normal_export_percentage"
+CONF_PRICE_AUTOMATION_ENABLED = "price_automation_enabled"
 
-PLATFORMS = ["number", "switch", "sensor"]
+DEFAULT_COMMAND_SERVER_URL = "https://server.growatt.com"
+DEFAULT_DEVICE_PASSWORD_PREFIX = "growatt"
+DEFAULT_EXPORT_PERCENTAGE = 100
+DEFAULT_METER_ENABLED = False
 
-SERVICE_SET_EXPORT_LIMIT = "set_export_limit"
+DEFAULT_PRICE_AUTOMATION_ENABLED = False
+DEFAULT_PRICE_THRESHOLD = 0.05
+DEFAULT_PRICE_RECOVERY_THRESHOLD = 0.06
+DEFAULT_PRICE_INCLUDE_TAX = True
+DEFAULT_PRICE_TRIGGER_METER_ENABLED = True
+DEFAULT_PRICE_TRIGGER_EXPORT_PERCENTAGE = 100
+DEFAULT_PRICE_NORMAL_METER_ENABLED = False
+DEFAULT_PRICE_NORMAL_EXPORT_PERCENTAGE = 100
