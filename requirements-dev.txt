@@ -1,0 +1,5 @@
+ruff
+pytest
+pytest-homeassistant-custom-component
+pre-commit
+mypy
