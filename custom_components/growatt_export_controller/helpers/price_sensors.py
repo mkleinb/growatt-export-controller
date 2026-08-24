@@ -1,147 +1,176 @@
-"""Helpers to discover likely price sensors."""
+"""Discovery of likely current electricity-price sensors."""
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass
 
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, State
 
-PRICE_ID_HINTS = (
-    "price",
-    "tariff",
-    "electricity",
-    "energy_price",
-    "spot",
+from ..price_control import parse_numeric_price
+
+_PROVIDER_HINTS = (
     "zonneplan",
     "tibber",
     "nordpool",
-    "kwh",
+    "nord_pool",
+    "anwb",
+    "easyenergy",
+    "easy_energy",
+    "energyzero",
+    "enever",
+    "essent",
+    "frank_energie",
+    "nextenergy",
+    "next_energy",
+    "powerpeers",
 )
-
-PRICE_NAME_HINTS = (
-    "price",
-    "electricity",
-    "energy",
+_PRICE_HINTS = (
+    "electricity_price",
+    "electricity_tariff",
+    "energy_price",
+    "stroomprijs",
+    "stroom_prijs",
+    "elektriciteitsprijs",
+    "electricity price",
+    "electricity tariff",
+    "energy price",
+    "current tariff",
+    "huidig tarief",
+    "actueel tarief",
+    "spot price",
+    "marktprijs",
+    "market price",
     "tariff",
-    "spot",
+    "tarief",
+    "price",
+    "prijs",
 )
-
-PRICE_UNIT_HINTS = (
+_CURRENT_HINTS = ("current", "currently", "huidig", "actueel", "now", "nu")
+_NON_CURRENT_HINTS = (
+    "tomorrow",
+    "morgen",
+    "next",
+    "volgend",
+    "average",
+    "gemiddeld",
+    "lowest",
+    "laagste",
+    "highest",
+    "hoogste",
+    "forecast",
+    "verwachting",
+    "history",
+    "historie",
+    "gas",
+)
+_PRICE_UNIT_HINTS = (
     "€/kwh",
     "eur/kwh",
-    "eur / kwh",
     "euro/kwh",
     "ct/kwh",
     "c/kwh",
+    "cent/kwh",
+    "€/mwh",
+    "eur/mwh",
 )
-
-DEVICE_CLASS_HINTS = {"monetary"}
-
-WEIGHT_DEVICE_CLASS = 50
-WEIGHT_UNIT = 40
-WEIGHT_ENTITY_ID = 30
-WEIGHT_FRIENDLY_NAME = 20
-WEIGHT_STATE_CLASS = 10
 
 
 @dataclass(slots=True, frozen=True)
 class PriceSensorCandidate:
-    """A ranked candidate for a likely electricity price sensor."""
+    """Ranked electricity-price sensor candidate."""
 
     entity_id: str
-    friendly_name: str
+    name: str
     score: int
+    current_value: float
+    unit: str | None
     reasons: tuple[str, ...]
 
+    @property
+    def label(self) -> str:
+        """Return a compact, user-friendly dropdown label."""
 
-def _normalize(value: str | None) -> str:
-    return value.lower().strip() if value else ""
+        value = f"{self.current_value:g}"
+        if self.unit:
+            value = f"{value} {self.unit}"
+        return f"{self.name} — {value}"
 
 
-def _contains_hint(value: str | None, hints: Iterable[str]) -> bool:
-    text = _normalize(value)
-    return bool(text) and any(hint in text for hint in hints)
+def _normalized(value: object) -> str:
+    return str(value or "").strip().lower()
 
 
-def _is_numeric_state(state: State) -> bool:
-    try:
-        float(state.state)
-    except (TypeError, ValueError):
-        return False
-    return True
+def _has_any(text: str, hints: tuple[str, ...]) -> bool:
+    return any(hint in text for hint in hints)
 
 
 def _score_state(state: State) -> PriceSensorCandidate | None:
-    """Score a sensor and return a candidate if it looks like a price sensor."""
-    if state.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
-        return None
-    if not _is_numeric_state(state):
+    if state.state in {STATE_UNKNOWN, STATE_UNAVAILABLE}:
         return None
 
-    entity_id = state.entity_id
-    attrs = state.attributes
-    friendly_name = str(attrs.get("friendly_name") or entity_id)
-    device_class = _normalize(attrs.get("device_class"))
-    unit = attrs.get("unit_of_measurement")
-    state_class = _normalize(attrs.get("state_class"))
+    numeric_value = parse_numeric_price(state.state)
+    if numeric_value is None:
+        return None
+
+    name = str(state.attributes.get("friendly_name") or state.entity_id)
+    unit = state.attributes.get("unit_of_measurement")
+    device_class = _normalized(state.attributes.get("device_class"))
+
+    searchable = f"{state.entity_id} {name}".lower()
+    normalized_unit = _normalized(unit).replace(" ", "")
+
+    unit_match = _has_any(normalized_unit, _PRICE_UNIT_HINTS)
+    price_match = _has_any(searchable, _PRICE_HINTS)
+    provider_match = _has_any(searchable, _PROVIDER_HINTS)
+
+    # Monetary sensors without an electricity-price hint can be bank balances,
+    # cost totals or other unrelated values. Do not include those.
+    if not unit_match and not price_match:
+        return None
 
     score = 0
     reasons: list[str] = []
 
-    if device_class in DEVICE_CLASS_HINTS:
-        score += WEIGHT_DEVICE_CLASS
-        reasons.append(f"device_class={device_class}")
+    if unit_match:
+        score += 70
+        reasons.append("electricity price unit")
+    if price_match:
+        score += 45
+        reasons.append("price or tariff name")
+    if provider_match:
+        score += 20
+        reasons.append("known energy provider")
+    if device_class == "monetary":
+        score += 10
+        reasons.append("monetary device class")
+    if _has_any(searchable, _CURRENT_HINTS):
+        score += 15
+        reasons.append("current-price name")
+    if _has_any(searchable, _NON_CURRENT_HINTS):
+        score -= 35
+        reasons.append("non-current price name")
 
-    if _contains_hint(unit, PRICE_UNIT_HINTS):
-        score += WEIGHT_UNIT
-        reasons.append(f"unit={unit}")
-
-    if _contains_hint(entity_id, PRICE_ID_HINTS):
-        score += WEIGHT_ENTITY_ID
-        reasons.append("entity_id_hint")
-
-    if _contains_hint(friendly_name, PRICE_NAME_HINTS):
-        score += WEIGHT_FRIENDLY_NAME
-        reasons.append("friendly_name_hint")
-
-    if state_class:
-        score += WEIGHT_STATE_CLASS
-        reasons.append(f"state_class={state_class}")
-
-    if score <= 0:
+    if score < 40:
         return None
 
     return PriceSensorCandidate(
-        entity_id=entity_id,
-        friendly_name=friendly_name,
+        entity_id=state.entity_id,
+        name=name,
         score=score,
+        current_value=numeric_value,
+        unit=str(unit) if unit is not None else None,
         reasons=tuple(reasons),
     )
 
 
-def discover_price_sensor_candidates(
-    hass: HomeAssistant,
-) -> list[PriceSensorCandidate]:
-    """Return ranked candidates for likely price sensors."""
-    candidates: list[PriceSensorCandidate] = []
+def discover_price_sensor_candidates(hass: HomeAssistant) -> list[PriceSensorCandidate]:
+    """Return likely price sensors, best match first."""
 
-    for state in hass.states.async_all("sensor"):
-        candidate = _score_state(state)
-        if candidate is not None:
-            candidates.append(candidate)
-
-    candidates.sort(
-        key=lambda item: (-item.score, item.friendly_name.lower(), item.entity_id)
-    )
-    return candidates
-
-
-def discover_price_sensors(hass: HomeAssistant) -> list[tuple[str, str]]:
-    """Return candidate price sensors as (entity_id, label)."""
-    candidates = discover_price_sensor_candidates(hass)
-    return [
-        (candidate.entity_id, f"{candidate.friendly_name} ({candidate.score})")
-        for candidate in candidates
+    candidates = [
+        candidate
+        for state in hass.states.async_all("sensor")
+        if (candidate := _score_state(state)) is not None
     ]
+    candidates.sort(key=lambda item: (-item.score, item.name.casefold(), item.entity_id))
+    return candidates

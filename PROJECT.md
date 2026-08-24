@@ -1,133 +1,25 @@
-# Growatt Export Controller Project
+# Growatt Export Controller project
 
-## Purpose
+## Goal
 
-Home Assistant custom integration for controlling Growatt export limits via the Growatt cloud.
+Provide a reliable Home Assistant custom integration that controls Growatt export settings through the Growatt cloud and can automatically switch those settings from a selected electricity-price sensor.
 
-The integration currently supports:
-- browser-compatible login flow
-- export limit control via `tcpSet.do`
-- meter enable / disable
-- export percentage control
+## Proven Growatt command
 
-## Core principle
+The integration uses the browser-compatible login flow and sends `backflow_setting` commands to `tcpSet.do`. A command is considered successful only when Growatt explicitly returns `success: true` or `inv_set_success`.
 
-The integration must remain:
-- reliable
-- testable
-- HACS-ready
-- easy to maintain
-- understandable for future contributors
+## Price-control defaults
 
-## Current state
+At or below the configured activation threshold:
 
-Working foundation:
-- Growatt API integration works
-- Home Assistant config flow exists
-- Switch entity exists
-- Number entity exists
-- Sensor entity exists
-- GitHub repository is created
-- VSCode workflow is in place
-- price sensor discovery is started
+- Meter Enable: on
+- Export percentage: 100%
 
-## Planned architecture
+At or above the configured recovery threshold:
 
-### Layers
+- Meter Enable: off
+- Export percentage: 100%
 
-1. **API layer**
-   - login
-   - session handling
-   - Growatt requests
-   - retries
-   - response validation
+## Important limitation
 
-2. **Decision layer**
-   - evaluate current price
-   - apply threshold logic
-   - apply hysteresis
-   - decide whether to enable or disable export control
-
-3. **Automation layer**
-   - select price source
-   - monitor sensor changes
-   - trigger Growatt actions when needed
-
-4. **Presentation layer**
-   - switch
-   - number
-   - sensor
-   - diagnostics
-   - options flow
-
-## Price automation rules
-
-The user can configure:
-- a price source sensor
-- an activation threshold
-- a recovery threshold
-- whether tax is included or excluded
-- the meter state when triggered
-- the export percentage when triggered
-- the meter state when normal
-- the export percentage when normal
-
-Default user behavior:
-- when electricity price is low or negative:
-  - Meter Enable = on
-  - Export Percentage = 100%
-- when electricity price returns above threshold:
-  - Meter Enable = off
-  - Export Percentage = 100%
-
-## Sensor discovery rules
-
-The integration should automatically detect likely price sensors.
-
-Preferred sensors:
-- numeric sensors
-- sensors with monetary device class
-- sensors containing price-related keywords
-- sensors with units like €/kWh or EUR/kWh
-- sensors from known providers such as Zonneplan, Tibber, Nord Pool, ANWB, EasyEnergy
-
-The UI should show only likely price sensors, so the user does not need to type entity IDs manually.
-
-## Quality rules
-
-All code changes should follow:
-- small commits
-- clear commit messages
-- linting with Ruff
-- formatting with Ruff
-- basic compile checks
-- readable logging
-- type hints where practical
-
-## Sprint roadmap
-
-### Sprint 1
-Repository scaffolding and GitHub setup
-
-### Sprint 2
-Developer tooling and code cleanup
-
-### Sprint 3
-Price sensor discovery and options flow
-
-### Sprint 4
-Price decision engine and hysteresis
-
-### Sprint 5
-Automatic switching based on configured price source
-
-### Sprint 6
-Diagnostics, tests, and documentation
-
-### Sprint 7
-HACS release preparation
-
-## Notes
-
-Keep the working Growatt control path stable while adding new features.
-If a feature is not yet proven, keep it behind configuration or in a separate module.
+The cloud flow has no reliable settings readback in this integration. Entities therefore represent the last command successfully sent by Home Assistant. An optional reapply interval can reconcile changes made outside Home Assistant.

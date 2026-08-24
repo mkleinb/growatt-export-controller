@@ -1,8 +1,8 @@
 # Contributing
 
-1. Create a feature branch.
-2. Make your changes.
-3. Run Home Assistant checks if available.
-4. Open a pull request.
+1. Create a branch from `main`.
+2. Keep changes focused and include tests for pure logic where practical.
+3. Run `ruff check .`, `ruff format --check .`, and `pytest`.
+4. Open a pull request describing the user-visible behavior and test results.
 
-Please keep changes small and well described.
+Do not include Growatt credentials, cookies, HAR files, or inverter serial numbers in issues, tests, or logs.

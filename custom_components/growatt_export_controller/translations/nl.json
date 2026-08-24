@@ -1,0 +1,97 @@
+{
+  "title": "Growatt Export Controller",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Verbinden met Growatt",
+        "description": "Vul het Growatt-account en het serienummer van de omvormer in. De verbinding wordt gecontroleerd zonder instellingen van de omvormer te wijzigen.",
+        "data": {
+          "name": "Naam",
+          "username": "Growatt-gebruikersnaam",
+          "password": "Growatt-wachtwoord",
+          "serial_number": "Serienummer omvormer",
+          "command_base_url": "Growatt-commandoserver-URL",
+          "default_export_percentage": "Initieel exportpercentage",
+          "default_meter_enabled": "Initiële status Meter Enable"
+        },
+        "data_description": {
+          "default_export_percentage": "Lokale beginstatus voordat het eerste commando naar Growatt is verstuurd.",
+          "default_meter_enabled": "Laat uitgeschakeld voor normale onbeperkte teruglevering."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met Growatt.",
+      "invalid_auth": "Growatt heeft de aanmelding geweigerd.",
+      "serial_required": "Vul het serienummer van de omvormer in."
+    },
+    "abort": {
+      "already_configured": "Deze Growatt-controller is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Growatt-export- en prijsautomatisering",
+        "description": "Kies een automatisch herkende stroomprijssensor en stel de schakeldrempels in. Op of onder de activatiedrempel is de standaardactie: Meter Enable AAN en 100%. Boven de hersteldrempel: Meter Enable UIT en 100%.",
+        "data": {
+          "price_automation_enabled": "Prijsautomatisering inschakelen",
+          "price_sensor": "Stroomprijssensor",
+          "price_activation_threshold": "Activatiedrempel",
+          "price_recovery_threshold": "Hersteldrempel",
+          "price_trigger_meter_enabled": "Meter Enable onder de drempel",
+          "price_trigger_export_percentage": "Exportpercentage onder de drempel",
+          "price_normal_meter_enabled": "Meter Enable boven de hersteldrempel",
+          "price_normal_export_percentage": "Exportpercentage boven de hersteldrempel",
+          "price_sensor_includes_tax": "Geselecteerde sensor is inclusief belasting",
+          "price_threshold_includes_tax": "Drempelbedragen zijn inclusief belasting",
+          "price_vat_percent": "Btw-percentage voor conversie",
+          "price_fixed_tax_eur_per_kwh": "Vaste belasting/toeslag voor conversie",
+          "price_poll_interval_minutes": "Interval voor extra controle",
+          "price_reapply_interval_minutes": "Interval voor opnieuw toepassen",
+          "default_export_percentage": "Initieel exportpercentage",
+          "default_meter_enabled": "Initiële status Meter Enable",
+          "request_timeout": "Time-out Growatt-request",
+          "retry_attempts": "Aantal Growatt-pogingen",
+          "retry_backoff_seconds": "Wachttijd tussen pogingen"
+        },
+        "data_description": {
+          "price_sensor": "Alleen numerieke sensoren die op een stroomprijs lijken worden getoond. Als niets wordt herkend, verschijnt een normale sensorkiezer.",
+          "price_activation_threshold": "Activeer de lageprijsactie op of onder deze prijs in EUR/kWh.",
+          "price_recovery_threshold": "Ga terug naar de normale actie op of boven deze prijs. Zet deze iets hoger dan de activatiedrempel om heen-en-weer schakelen te voorkomen.",
+          "price_fixed_tax_eur_per_kwh": "Vast bedrag per kWh exclusief btw. Dit wordt alleen gebruikt als sensor en drempels een verschillende belastingbasis hebben. Gebruik 0 bij een vergelijking op dezelfde basis.",
+          "price_reapply_interval_minutes": "Verstuur de gewenste status periodiek opnieuw omdat Growatt geen betrouwbare teruglezing biedt. Gebruik 0 om dit uit te schakelen."
+        }
+      }
+    },
+    "error": {
+      "price_sensor_required": "Kies een stroomprijssensor wanneer de automatisering is ingeschakeld.",
+      "price_sensor_not_found": "De geselecteerde prijssensor bestaat niet.",
+      "price_sensor_not_numeric": "De geselecteerde prijssensor heeft momenteel geen numerieke waarde.",
+      "recovery_below_activation": "De hersteldrempel moet gelijk aan of hoger dan de activatiedrempel zijn."
+    }
+  },
+  "entity": {
+    "number": {
+      "export_percentage": {
+        "name": "Exportpercentage"
+      }
+    },
+    "switch": {
+      "meter_enable": {
+        "name": "Meter Enable"
+      }
+    },
+    "sensor": {
+      "controller_status": {
+        "name": "Controllerstatus"
+      },
+      "price_control_status": {
+        "name": "Status prijsregeling"
+      },
+      "current_price": {
+        "name": "Huidige vergelijkingsprijs"
+      }
+    }
+  }
+}

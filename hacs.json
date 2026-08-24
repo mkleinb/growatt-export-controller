@@ -1,6 +1,5 @@
 {
   "name": "Growatt Export Controller",
   "render_readme": true,
-  "domains": ["sensor", "switch", "number"],
-  "homeassistant": "2024.0.0"
+  "homeassistant": "2026.4.0"
 }

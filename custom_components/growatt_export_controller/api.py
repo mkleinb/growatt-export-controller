@@ -120,13 +120,20 @@ class GrowattApiClient:
                 cookies = self._session.cookie_jar.filter_cookies(base_url)
                 cookie_names.update(cookie.key for cookie in cookies.values())
             return ", ".join(sorted(cookie_names)) if cookie_names else "(none)"
-        except Exception:  # noqa: BLE001
+        except Exception:
             return "(unavailable)"
 
     @staticmethod
     def _payload_snapshot(payload: dict[str, str]) -> dict[str, str]:
         snapshot = dict(payload)
-        for key in ("password", "passwordCrc", "devicePassword", "devicePasswordCrc"):
+        for key in (
+            "password",
+            "passwordCrc",
+            "devicePassword",
+            "devicePasswordCrc",
+            "account",
+            "userName",
+        ):
             if key in snapshot and snapshot[key]:
                 snapshot[key] = "<md5:{} chars>".format(len(snapshot[key])) if key.lower().endswith("crc") else "<redacted>"
         return snapshot
@@ -153,9 +160,7 @@ class GrowattApiClient:
             "denied",
             "notallowed",
         )
-        if any(token in lowered for token in failure_tokens):
-            return True
-        return False
+        return any(token in lowered for token in failure_tokens)
 
     @staticmethod
     def _body_indicates_success(body: str) -> bool:
@@ -173,6 +178,17 @@ class GrowattApiClient:
         )
         return any(token in lowered for token in success_tokens)
 
+    @staticmethod
+    def _body_indicates_command_success(body: str) -> bool:
+        """Return whether tcpSet.do explicitly accepted the command."""
+
+        lowered = body.lower().replace(" ", "")
+        return (
+            '"success":true' in lowered
+            or "'success':true" in lowered
+            or "inv_set_success" in lowered
+        )
+
     def _request_timeout(self) -> aiohttp.ClientTimeout:
         return aiohttp.ClientTimeout(total=self._config.timeout)
 
@@ -184,7 +200,7 @@ class GrowattApiClient:
         label: str,
         allow_redirects: bool = True,
     ) -> _HttpResult:
-        _LOGGER.warning("Growatt %s GET start: url=%s cookies_before=%s", label, url, self._cookie_snapshot())
+        _LOGGER.debug("Growatt %s GET start: url=%s cookies_before=%s", label, url, self._cookie_snapshot())
         try:
             async with self._session.get(
                 url,
@@ -204,7 +220,7 @@ class GrowattApiClient:
                         if key.lower() in {"content-type", "location", "server"}
                     },
                 )
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "Growatt %s GET result: status=%s final_url=%s history=%s cookies_after=%s content_type=%s body=%s",
                     label,
                     result.status,
@@ -229,7 +245,7 @@ class GrowattApiClient:
         label: str,
         allow_redirects: bool = True,
     ) -> _HttpResult:
-        _LOGGER.warning(
+        _LOGGER.debug(
             "Growatt %s POST start: endpoint=%s cookies_before=%s payload=%s",
             label,
             url,
@@ -256,7 +272,7 @@ class GrowattApiClient:
                         if key.lower() in {"content-type", "location", "server"}
                     },
                 )
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "Growatt %s POST result: status=%s final_url=%s history=%s cookies_after=%s content_type=%s body=%s",
                     label,
                     result.status,
@@ -297,7 +313,7 @@ class GrowattApiClient:
             server_login_page_url = self._command_url("/login")
             command_index_url = self._command_url("/index")
 
-            _LOGGER.warning(
+            _LOGGER.debug(
                 "Growatt login start: url=%s force=%s cookies_before=%s",
                 server_login_url,
                 force,
@@ -364,7 +380,7 @@ class GrowattApiClient:
                 try:
                     await self._get_text(url, headers=headers, label=label)
                 except GrowattRequestError as exc:
-                    _LOGGER.warning("Growatt warmup request failed for %s: %s", label, exc)
+                    _LOGGER.debug("Growatt warmup request failed for %s: %s", label, exc)
 
             login_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
             password_crc = self._password_crc()
@@ -409,9 +425,9 @@ class GrowattApiClient:
                 self._last_login_status = result.status
                 self._last_login_body = result.body
                 if self._body_indicates_failure(result.body):
-                    _LOGGER.warning("Growatt %s returned a failure body", label)
+                    _LOGGER.debug("Growatt %s returned a failure body", label)
                 else:
-                    _LOGGER.warning("Growatt %s completed without a clear failure body", label)
+                    _LOGGER.debug("Growatt %s completed without a clear failure body", label)
 
             server_variants: list[tuple[str, dict[str, str]]] = [
                 (
@@ -458,7 +474,7 @@ class GrowattApiClient:
                 if result.status is None or result.status >= 400:
                     continue
                 if self._body_indicates_failure(result.body):
-                    _LOGGER.warning("Growatt %s returned a failure body", label)
+                    _LOGGER.debug("Growatt %s returned a failure body", label)
                     continue
                 if result.final_url and result.final_url.rstrip("/") == server_login_url.rstrip("/"):
                     # A non-failing response on the server login URL is what we need.
@@ -500,15 +516,16 @@ class GrowattApiClient:
             "param2": str(percentage),
             "param3": "0",
         }
-        _LOGGER.warning(
-            "Preparing Growatt export limit payload: percentage=%s meter_enabled=%s payload=%s",
+        _LOGGER.debug(
+            "Preparing Growatt export limit payload: percentage=%s "
+            "meter_enabled=%s payload=%s",
             percentage,
             meter_enabled,
             self._payload_snapshot(payload),
         )
 
         result = await self._request_with_retry("/tcpSet.do", payload)
-        _LOGGER.warning(
+        _LOGGER.info(
             "Growatt export limit request finished: success=%s status=%s relogin=%s final_url=%s",
             result.success,
             result.status,
@@ -531,8 +548,11 @@ class GrowattApiClient:
                     _LOGGER.warning("Growatt session appears stale; relogging in and retrying once")
                     await self.async_login(force=True)
                     result = await self._post(endpoint, payload)
-                    return GrowattCommandResult(
-                        success=200 <= (result.status or 0) < 300 and not self._body_indicates_failure(result.body),
+                    retry_result = GrowattCommandResult(
+                        success=(
+                            200 <= (result.status or 0) < 300
+                            and self._body_indicates_command_success(result.body)
+                        ),
                         status=result.status,
                         body=result.body,
                         endpoint=endpoint,
@@ -540,6 +560,12 @@ class GrowattApiClient:
                         final_url=result.final_url,
                         response_headers=result.response_headers,
                     )
+                    if not retry_result.success:
+                        raise GrowattRequestError(
+                            "Growatt rejected the command after re-login "
+                            f"(HTTP {retry_result.status}): {self._truncate(retry_result.body, 300)}"
+                        )
+                    return retry_result
 
                 if not result.success:
                     raise GrowattRequestError(
@@ -569,7 +595,7 @@ class GrowattApiClient:
             "User-Agent": _USER_AGENT,
             "X-Requested-With": "XMLHttpRequest",
         }
-        _LOGGER.warning(
+        _LOGGER.debug(
             "Growatt POST start: endpoint=%s cookies_before=%s payload=%s",
             endpoint,
             self._cookie_snapshot(),
@@ -585,7 +611,7 @@ class GrowattApiClient:
             ) as resp:
                 body = await resp.text()
                 body_snippet = self._truncate(body)
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "Growatt POST result: endpoint=%s status=%s final_url=%s history=%s cookies_after=%s content_type=%s body=%s",
                     endpoint,
                     resp.status,
@@ -595,9 +621,11 @@ class GrowattApiClient:
                     resp.headers.get("Content-Type"),
                     body_snippet,
                 )
-                body_failure = self._body_indicates_failure(body)
                 return GrowattCommandResult(
-                    success=200 <= resp.status < 300 and not body_failure,
+                    success=(
+                        200 <= resp.status < 300
+                        and self._body_indicates_command_success(body)
+                    ),
                     status=resp.status,
                     body=body,
                     endpoint=endpoint,

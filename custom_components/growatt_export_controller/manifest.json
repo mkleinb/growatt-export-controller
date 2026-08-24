@@ -1,9 +1,15 @@
 {
   "domain": "growatt_export_controller",
   "name": "Growatt Export Controller",
-  "codeowners": [],
+  "codeowners": [
+    "@mkleinb"
+  ],
   "config_flow": true,
-  "iot_class": "cloud_poll",
+  "documentation": "https://github.com/mkleinb/growatt-export-controller",
+  "issue_tracker": "https://github.com/mkleinb/growatt-export-controller/issues",
+  "integration_type": "device",
+  "iot_class": "cloud_polling",
   "requirements": [],
-  "version": "1.4.0"
+  "single_config_entry": true,
+  "version": "1.2.0-rc.1"
 }

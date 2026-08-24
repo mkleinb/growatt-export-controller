@@ -1,16 +1,27 @@
-name: Validate
+name: Validate HACS and Home Assistant
 
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  validate:
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: HACS validation
+        uses: hacs/action@main
+        with:
+          category: integration
+          ignore: description topics
+
+  hassfest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate repo files
-        run: |
-          test -f custom_components/growatt_export_controller/manifest.json
-          test -f hacs.json
-          test -f README.md
+      - uses: home-assistant/actions/hassfest@master
