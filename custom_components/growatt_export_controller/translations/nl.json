@@ -1,0 +1,125 @@
+{
+  "title": "Growatt Export Controller",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Verbinden met Growatt",
+        "description": "Vul het Growatt-account en het serienummer van de omvormer in. De verbinding wordt gecontroleerd zonder instellingen van de omvormer te wijzigen.",
+        "data": {
+          "name": "Naam",
+          "username": "Growatt-gebruikersnaam",
+          "password": "Growatt-wachtwoord",
+          "serial_number": "Serienummer omvormer",
+          "command_base_url": "Growatt-commandoserver-URL",
+          "default_export_percentage": "Initieel exportpercentage",
+          "default_meter_enabled": "Initiële status Meter Enable"
+        },
+        "data_description": {
+          "default_export_percentage": "Lokale beginstatus voordat het eerste commando naar Growatt is verstuurd.",
+          "default_meter_enabled": "Laat uitgeschakeld voor normale onbeperkte teruglevering."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met Growatt.",
+      "invalid_auth": "Growatt heeft de aanmelding geweigerd.",
+      "serial_required": "Vul het serienummer van de omvormer in."
+    },
+    "abort": {
+      "already_configured": "Deze Growatt-controller is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Growatt-export- en prijsautomatisering",
+        "description": "Kies een automatisch herkende stroomprijssensor en prijsstrategie. Automatisch economisch gebruikt tot en met 31 december 2026 de waarde binnen de salderingsregeling en schakelt vanaf 1 januari 2027 automatisch over op de terugleverwaarde exclusief belasting. Handmatige drempels blijven beschikbaar.",
+        "data": {
+          "price_automation_enabled": "Prijsautomatisering inschakelen",
+          "price_sensor": "Stroomprijssensor",
+          "price_activation_threshold": "Activatiedrempel",
+          "price_recovery_threshold": "Hersteldrempel",
+          "price_trigger_meter_enabled": "Meter Enable onder de drempel",
+          "price_trigger_export_percentage": "Exportpercentage onder de drempel",
+          "price_normal_meter_enabled": "Meter Enable boven de hersteldrempel",
+          "price_normal_export_percentage": "Exportpercentage boven de hersteldrempel",
+          "price_sensor_includes_tax": "Geselecteerde sensor is inclusief belasting",
+          "price_threshold_includes_tax": "Drempelbedragen zijn inclusief belasting",
+          "price_vat_percent": "Btw-percentage voor conversie",
+          "price_fixed_tax_eur_per_kwh": "Vaste belasting/toeslag voor conversie",
+          "price_poll_interval_minutes": "Interval voor extra controle",
+          "price_reapply_interval_minutes": "Interval voor opnieuw toepassen",
+          "default_export_percentage": "Initieel exportpercentage",
+          "default_meter_enabled": "Initiële status Meter Enable",
+          "request_timeout": "Time-out Growatt-request",
+          "retry_attempts": "Aantal Growatt-pogingen",
+          "retry_backoff_seconds": "Wachttijd tussen pogingen",
+          "price_strategy": "Prijsstrategie",
+          "economic_2026_within_saldering": "Teruglevering in 2026 blijft binnen jaarlijkse salderingsruimte",
+          "economic_recovery_margin": "Economische herstelmarge"
+        },
+        "data_description": {
+          "price_sensor": "Een actuele kwartierprijssensor krijgt de voorkeur wanneer die beschikbaar is. Automatisch economisch kan ook de actuele prijs exclusief belasting uit de forecast van de gekozen sensor gebruiken.",
+          "price_activation_threshold": "Alleen gebruikt bij Handmatige drempels. Activeer de lageprijsactie op of onder deze prijs in EUR/kWh.",
+          "price_recovery_threshold": "Alleen gebruikt bij Handmatige drempels. Ga terug naar de normale actie op of boven deze prijs.",
+          "price_fixed_tax_eur_per_kwh": "Alleen gebruikt voor handmatige conversie. Automatisch economisch gokt nooit een ontbrekende prijs exclusief belasting.",
+          "price_reapply_interval_minutes": "Verstuur de gewenste status periodiek opnieuw omdat Growatt geen betrouwbare teruglezing biedt. Gebruik 0 om dit uit te schakelen.",
+          "price_strategy": "Automatisch economisch schakelt bij een netto terugleverwaarde van 0 EUR/kWh. Bij activering gebruikt het Growatt zero-export (Meter Enable AAN, export 0%), zodat zonnestroom beschikbaar blijft voor eigen verbruik. Zodra terugleveren weer rendabel is, wordt Meter Enable UIT en export 100% hersteld. Handmatig gebruikt de activatie- en hersteldrempels hieronder.",
+          "economic_2026_within_saldering": "Schakel dit in als je totale teruglevering aan het net in 2026 op jaarbasis niet hoger is dan je afname van het net. Vanaf 1 januari 2027 wordt deze instelling genegeerd.",
+          "economic_recovery_margin": "In automatisch economische modus wordt pas naar normale teruglevering teruggeschakeld wanneer de economische waarde minimaal dit bedrag boven nul ligt. Standaard: 0,005 EUR/kWh.",
+          "price_threshold_includes_tax": "Alleen gebruikt bij Handmatige drempels.",
+          "price_vat_percent": "Alleen gebruikt voor handmatige conversie tussen belastinggrondslagen."
+        }
+      }
+    },
+    "error": {
+      "price_sensor_required": "Kies een stroomprijssensor wanneer de automatisering is ingeschakeld.",
+      "price_sensor_not_found": "De geselecteerde prijssensor bestaat niet.",
+      "price_sensor_not_numeric": "De geselecteerde prijssensor heeft momenteel geen numerieke waarde.",
+      "recovery_below_activation": "De hersteldrempel moet gelijk aan of hoger dan de activatiedrempel zijn."
+    }
+  },
+  "entity": {
+    "number": {
+      "export_percentage": {
+        "name": "Exportpercentage"
+      }
+    },
+    "switch": {
+      "meter_enable": {
+        "name": "Meter Enable"
+      },
+      "price_automation": {
+        "name": "Prijsautomatisering"
+      }
+    },
+    "sensor": {
+      "controller_status": {
+        "name": "Controllerstatus"
+      },
+      "price_control_status": {
+        "name": "Status prijsregeling",
+        "state": {
+          "disabled": "Uitgeschakeld",
+          "normal": "Normaal",
+          "triggered": "Prijsactie actief",
+          "sleeping": "Omvormer slaapt",
+          "waiting": "Wachten op prijsgegevens",
+          "error": "Fout"
+        }
+      },
+      "current_price": {
+        "name": "Huidige vergelijkingsprijs"
+      },
+      "solar_power": {
+        "name": "Zonnevermogen"
+      },
+      "solar_energy_today": {
+        "name": "Zonneproductie vandaag"
+      },
+      "solar_energy_total": {
+        "name": "Zonneproductie totaal"
+      }
+    }
+  }
+}
