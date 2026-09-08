@@ -1,55 +1,69 @@
-"""Number platform for Growatt Export Controller."""
+"""Number entities for Growatt Export Controller."""
 
 from __future__ import annotations
 
 import logging
 
-from homeassistant.components.number import NumberEntity, NumberEntityDescription
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.number import (
+    NumberEntity,
+    NumberEntityDescription,
+    NumberMode,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from . import GrowattConfigEntry
 from .coordinator import GrowattExportControllerCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-NUMBER_DESCRIPTION = NumberEntityDescription(
+_DESCRIPTION = NumberEntityDescription(
     key="export_percentage",
-    name="Export Percentage",
+    translation_key="export_percentage",
     native_min_value=0,
     native_max_value=100,
     native_step=1,
+    native_unit_of_measurement="%",
+    mode=NumberMode.SLIDER,
     icon="mdi:percent",
 )
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: GrowattConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    runtime = hass.data[DOMAIN][entry.entry_id]
-    coordinator: GrowattExportControllerCoordinator = runtime["coordinator"]
-    async_add_entities([GrowattExportPercentageNumber(coordinator, entry)])
+    """Set up the export percentage entity."""
+
+    del hass
+    async_add_entities(
+        [GrowattExportPercentageNumber(entry.runtime_data.coordinator, entry)]
+    )
 
 
-class GrowattExportPercentageNumber(CoordinatorEntity[GrowattExportControllerCoordinator], NumberEntity):
-    """Control the export percentage."""
+class GrowattExportPercentageNumber(
+    CoordinatorEntity[GrowattExportControllerCoordinator], NumberEntity
+):
+    """Control the last commanded Growatt export percentage."""
 
     _attr_has_entity_name = True
-    entity_description = NUMBER_DESCRIPTION
+    entity_description = _DESCRIPTION
 
-    def __init__(self, coordinator: GrowattExportControllerCoordinator, entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: GrowattExportControllerCoordinator,
+        entry: GrowattConfigEntry,
+    ) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{entry.entry_id}_export_percentage"
-        self._attr_name = self.entity_description.name
+        self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_export_percentage"
         self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
+            "identifiers": {(entry.domain, entry.unique_id or entry.entry_id)},
             "name": entry.title,
             "manufacturer": "Growatt",
-            "model": "Export Controller",
+            "model": "Cloud Export Controller",
+            "serial_number": coordinator.config.serial_num,
         }
 
     @property
@@ -57,7 +71,15 @@ class GrowattExportPercentageNumber(CoordinatorEntity[GrowattExportControllerCoo
         return float(self.coordinator.data.export_percentage)
 
     async def async_set_native_value(self, value: float) -> None:
-        percentage = int(round(value))
+        percentage = round(value)
         meter_enabled = self.coordinator.data.meter_enabled
-        _LOGGER.warning("Export percentage set requested: percentage=%s meter_enabled=%s", percentage, meter_enabled)
-        await self.coordinator.async_set_export_limit(percentage, meter_enabled)
+        _LOGGER.info(
+            "Manual export percentage requested: percentage=%s meter_enabled=%s",
+            percentage,
+            meter_enabled,
+        )
+        await self.coordinator.async_set_export_limit(
+            percentage,
+            meter_enabled,
+            source="manual_percentage",
+        )

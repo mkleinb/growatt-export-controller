@@ -21,5 +21,20 @@
       "cannot_connect": "Could not connect to Growatt.",
       "invalid_auth": "Invalid credentials."
     }
+  },
+  "entity": {
+    "sensor": {
+      "price_control_status": {
+        "name": "Price control status",
+        "state": {
+          "disabled": "Disabled",
+          "normal": "Normal",
+          "triggered": "Price action active",
+          "sleeping": "Inverter sleeping",
+          "waiting": "Waiting for price data",
+          "error": "Error"
+        }
+      }
+    }
   }
 }

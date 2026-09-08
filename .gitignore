@@ -10,3 +10,6 @@ venv/
 .ruff_cache/
 .coverage
 htmlcov/
+*.bak*
+*.before-*
+._*

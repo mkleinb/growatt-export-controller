@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import voluptuous as vol
-
 from homeassistant import config_entries
+from homeassistant.helpers import selector
 
 from .const import (
+    CONF_PRICE_AUTOMATION_ENABLED,
     CONF_PRICE_INCLUDE_TAX,
     CONF_PRICE_NORMAL_EXPORT_PERCENTAGE,
     CONF_PRICE_NORMAL_METER_ENABLED,
@@ -15,6 +16,7 @@ from .const import (
     CONF_PRICE_THRESHOLD,
     CONF_PRICE_TRIGGER_EXPORT_PERCENTAGE,
     CONF_PRICE_TRIGGER_METER_ENABLED,
+    DEFAULT_PRICE_AUTOMATION_ENABLED,
     DEFAULT_PRICE_INCLUDE_TAX,
     DEFAULT_PRICE_NORMAL_EXPORT_PERCENTAGE,
     DEFAULT_PRICE_NORMAL_METER_ENABLED,
@@ -23,6 +25,7 @@ from .const import (
     DEFAULT_PRICE_TRIGGER_EXPORT_PERCENTAGE,
     DEFAULT_PRICE_TRIGGER_METER_ENABLED,
 )
+from .helpers.price_sensors import discover_price_sensor_candidates
 
 
 class GrowattExportControllerOptionsFlowHandler(config_entries.OptionsFlow):
@@ -31,18 +34,45 @@ class GrowattExportControllerOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self.config_entry = config_entry
 
+    def _build_price_selector(self):
+        candidates = discover_price_sensor_candidates(self.hass)
+
+        if not candidates:
+            return selector.TextSelector()
+
+        return selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=[
+                    selector.SelectOptionDict(
+                        value=candidate.entity_id,
+                        label=f"{candidate.friendly_name} ({candidate.score})",
+                    )
+                    for candidate in candidates
+                ],
+                mode=selector.SelectSelectorMode.DROPDOWN,
+            )
+        )
+
     async def async_step_init(self, user_input=None):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
         options = self.config_entry.options
+        price_selector = self._build_price_selector()
 
         schema = vol.Schema(
             {
                 vol.Optional(
+                    CONF_PRICE_AUTOMATION_ENABLED,
+                    default=options.get(
+                        CONF_PRICE_AUTOMATION_ENABLED,
+                        DEFAULT_PRICE_AUTOMATION_ENABLED,
+                    ),
+                ): bool,
+                vol.Optional(
                     CONF_PRICE_SENSOR,
                     default=options.get(CONF_PRICE_SENSOR, ""),
-                ): str,
+                ): price_selector,
                 vol.Optional(
                     CONF_PRICE_THRESHOLD,
                     default=options.get(CONF_PRICE_THRESHOLD, DEFAULT_PRICE_THRESHOLD),

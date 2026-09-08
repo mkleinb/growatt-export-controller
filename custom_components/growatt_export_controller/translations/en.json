@@ -4,22 +4,114 @@
     "step": {
       "user": {
         "title": "Connect to Growatt",
-        "description": "Enter your Growatt account, the inverter serial number, and the export control settings used by the web interface.",
+        "description": "Enter the Growatt account and inverter serial number. The connection is validated without changing inverter settings.",
         "data": {
           "name": "Name",
-          "username": "Username",
-          "password": "Password",
+          "username": "Growatt username",
+          "password": "Growatt password",
           "serial_number": "Inverter serial number",
-          "device_password_prefix": "Device password prefix",
           "command_base_url": "Growatt command server URL",
-          "default_export_percentage": "Default export percentage",
-          "default_meter_enabled": "Default meter enabled"
+          "default_export_percentage": "Initial export percentage",
+          "default_meter_enabled": "Initial meter enabled state"
+        },
+        "data_description": {
+          "default_export_percentage": "Local initial state before Growatt has received the first command.",
+          "default_meter_enabled": "Leave disabled for normal unrestricted feed-in."
         }
       }
     },
     "error": {
       "cannot_connect": "Could not connect to Growatt.",
-      "invalid_auth": "Invalid credentials."
+      "invalid_auth": "Growatt rejected the login.",
+      "serial_required": "Enter the inverter serial number."
+    },
+    "abort": {
+      "already_configured": "This Growatt controller is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Growatt export and price automation",
+        "description": "Choose a detected electricity-price sensor and price strategy. Automatic economic mode uses the 2026 saldering value through 31 December 2026 and automatically switches to the tax-excluded return value from 1 January 2027. Manual thresholds remain available.",
+        "data": {
+          "price_automation_enabled": "Enable price automation",
+          "price_sensor": "Electricity price sensor",
+          "price_activation_threshold": "Activation threshold",
+          "price_recovery_threshold": "Recovery threshold",
+          "price_trigger_meter_enabled": "Meter enabled below threshold",
+          "price_trigger_export_percentage": "Export percentage below threshold",
+          "price_normal_meter_enabled": "Meter enabled above recovery threshold",
+          "price_normal_export_percentage": "Export percentage above recovery threshold",
+          "price_sensor_includes_tax": "Selected sensor includes tax",
+          "price_threshold_includes_tax": "Thresholds include tax",
+          "price_vat_percent": "VAT percentage for conversion",
+          "price_fixed_tax_eur_per_kwh": "Fixed tax/fee for conversion",
+          "price_poll_interval_minutes": "Fallback check interval",
+          "price_reapply_interval_minutes": "Reapply interval",
+          "default_export_percentage": "Initial export percentage",
+          "default_meter_enabled": "Initial meter enabled state",
+          "request_timeout": "Growatt request timeout",
+          "retry_attempts": "Growatt retry attempts",
+          "retry_backoff_seconds": "Retry backoff",
+          "price_strategy": "Price strategy",
+          "economic_2026_within_saldering": "2026 return stays within annual saldering allowance",
+          "economic_recovery_margin": "Economic recovery margin"
+        },
+        "data_description": {
+          "price_sensor": "Current quarter-hour electricity tariffs are preferred when available. Automatic economic mode can also use a tax-excluded current value exposed in the selected sensor forecast.",
+          "price_activation_threshold": "Used only in Manual thresholds mode. Activate the low-price action at or below this EUR/kWh price.",
+          "price_recovery_threshold": "Used only in Manual thresholds mode. Return to the normal action at or above this EUR/kWh price.",
+          "price_fixed_tax_eur_per_kwh": "Used only for manual tax-basis conversion. Automatic economic mode never guesses missing tax-exclusive prices.",
+          "price_reapply_interval_minutes": "Periodically resend the desired state because Growatt does not provide reliable readback. Set to 0 to disable periodic reapplication.",
+          "price_strategy": "Automatic economic break-even switches at a net return value of 0 EUR/kWh. When triggered it uses Growatt zero-export (Meter Enable ON, export 0%) so solar remains available for self-consumption. When economic again it restores Meter Enable OFF and export 100%. Manual mode uses the activation and recovery thresholds below.",
+          "economic_2026_within_saldering": "Enable this when your total annual grid export in 2026 is not higher than your annual grid consumption. This option is ignored from 1 January 2027.",
+          "economic_recovery_margin": "In automatic economic mode, return to normal feed-in only when the economic value is at least this much above zero. Default: 0.005 EUR/kWh.",
+          "price_threshold_includes_tax": "Used only in Manual thresholds mode.",
+          "price_vat_percent": "Used only for manual tax-basis conversion."
+        }
+      }
+    },
+    "error": {
+      "price_sensor_required": "Select an electricity-price sensor when automation is enabled.",
+      "price_sensor_not_found": "The selected price sensor does not exist.",
+      "price_sensor_not_numeric": "The selected price sensor does not currently have a numeric state.",
+      "recovery_below_activation": "The recovery threshold must be equal to or higher than the activation threshold."
+    }
+  },
+  "entity": {
+    "number": {
+      "export_percentage": {
+        "name": "Export percentage"
+      }
+    },
+    "switch": {
+      "meter_enable": {
+        "name": "Meter enable"
+      },
+      "price_automation": {
+        "name": "Price automation"
+      }
+    },
+    "sensor": {
+      "controller_status": {
+        "name": "Controller status"
+      },
+      "price_control_status": {
+        "name": "Price control status"
+      },
+      "current_price": {
+        "name": "Current comparison price"
+      },
+      "solar_power": {
+        "name": "Solar power"
+      },
+      "solar_energy_today": {
+        "name": "Solar energy today"
+      },
+      "solar_energy_total": {
+        "name": "Solar energy total"
+      }
     }
   }
 }

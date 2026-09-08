@@ -1,10 +1,10 @@
 set_export_limit:
   name: Set export limit
-  description: Set the Growatt export limiting parameters.
+  description: Set the Growatt meter state and export percentage immediately.
   fields:
     percentage:
-      name: Percentage
-      description: Export limit percentage between 0 and 100.
+      name: Export percentage
+      description: Export percentage sent to Growatt (0 to 100).
       required: true
       selector:
         number:
@@ -12,9 +12,23 @@ set_export_limit:
           max: 100
           step: 1
           mode: slider
+          unit_of_measurement: "%"
     meter_enabled:
       name: Meter enabled
-      description: Whether the meter-based export control should be enabled.
+      description: Enable meter-based export control.
       required: false
+      default: false
+      selector:
+        boolean: {}
+
+evaluate_price_control:
+  name: Evaluate price control
+  description: Evaluate the selected price sensor now and optionally resend the desired Growatt state.
+  fields:
+    force_apply:
+      name: Force apply
+      description: Send the desired state even when the calculated mode has not changed.
+      required: false
+      default: false
       selector:
         boolean: {}
