@@ -7,7 +7,12 @@ from collections.abc import Mapping, Sequence
 from datetime import date, datetime, timezone
 from typing import Any
 
-from .models import GrowattControlSettings, PriceControlMode, PriceDecision, PriceStrategy
+from .models import (
+    GrowattControlSettings,
+    PriceControlMode,
+    PriceDecision,
+    PriceStrategy,
+)
 
 _CENT_UNITS = {
     "c/kwh",

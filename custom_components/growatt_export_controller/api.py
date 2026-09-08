@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from urllib.parse import urljoin
 
 import aiohttp
-from homeassistant.util import dt as dt_util
 from yarl import URL
 
 _LOGGER = logging.getLogger(__name__)
@@ -134,7 +133,7 @@ class GrowattApiClient:
                 cookies = self._session.cookie_jar.filter_cookies(URL(base_url))
                 cookie_names.update(cookie.key for cookie in cookies.values())
             return ", ".join(sorted(cookie_names)) if cookie_names else "(none)"
-        except Exception:
+        except Exception:  # noqa: BLE001
             return "(unavailable)"
 
     @staticmethod
@@ -148,8 +147,8 @@ class GrowattApiClient:
             "account",
             "userName",
         ):
-            if key in snapshot and snapshot[key]:
-                snapshot[key] = "<md5:{} chars>".format(len(snapshot[key])) if key.lower().endswith("crc") else "<redacted>"
+            if snapshot.get(key):
+                snapshot[key] = f"<md5:{len(snapshot[key])} chars>" if key.lower().endswith("crc") else "<redacted>"
         return snapshot
 
     @staticmethod
@@ -422,9 +421,7 @@ class GrowattApiClient:
                 except GrowattRequestError as exc:
                     _LOGGER.debug("Growatt warmup request failed for %s: %s", label, exc)
 
-            login_time = dt_util.now().strftime("%Y-%m-%d %H:%M:%S")
             password_crc = self._password_crc()
-
 
             server_variants: list[tuple[str, dict[str, str]]] = [
                 (

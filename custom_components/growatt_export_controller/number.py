@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.number import NumberEntity, NumberEntityDescription, NumberMode
+from homeassistant.components.number import (
+    NumberEntity,
+    NumberEntityDescription,
+    NumberMode,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -67,7 +71,7 @@ class GrowattExportPercentageNumber(
         return float(self.coordinator.data.export_percentage)
 
     async def async_set_native_value(self, value: float) -> None:
-        percentage = int(round(value))
+        percentage = round(value)
         meter_enabled = self.coordinator.data.meter_enabled
         _LOGGER.info(
             "Manual export percentage requested: percentage=%s meter_enabled=%s",

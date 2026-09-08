@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import date
 from hashlib import md5
 
+from homeassistant.util import dt as dt_util
+
 
 def md5_hex(value: str) -> str:
     """Return an MD5 hex digest."""
@@ -14,7 +16,7 @@ def md5_hex(value: str) -> str:
 
 def build_device_password(prefix: str, on_date: date | None = None) -> str:
     """Build the daily inverter password."""
-    on_date = on_date or date.today()
+    on_date = on_date or dt_util.now().date()
     return f"{prefix}{on_date:%Y%m%d}"
 
 

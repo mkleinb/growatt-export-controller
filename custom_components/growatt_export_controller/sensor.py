@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -149,7 +151,7 @@ class GrowattPriceControlStatusSensor(_GrowattSensorBase):
     """Expose price automation mode and its last decision."""
 
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = [mode.value for mode in PriceControlMode]
+    _attr_options: ClassVar[list[str]] = [mode.value for mode in PriceControlMode]
 
     def __init__(
         self,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 
@@ -15,19 +15,17 @@ from .const import (
     DEFAULT_NORMAL_METER_ENABLED,
     DEFAULT_PRICE_ACTIVATION_THRESHOLD,
     DEFAULT_PRICE_AUTOMATION_ENABLED,
-    DEFAULT_PRICE_STRATEGY,
     DEFAULT_PRICE_FIXED_TAX_EUR_PER_KWH,
     DEFAULT_PRICE_POLL_INTERVAL_MINUTES,
     DEFAULT_PRICE_REAPPLY_INTERVAL_MINUTES,
     DEFAULT_PRICE_RECOVERY_THRESHOLD,
     DEFAULT_PRICE_SENSOR_INCLUDES_TAX,
+    DEFAULT_PRICE_STRATEGY,
     DEFAULT_PRICE_THRESHOLD_INCLUDES_TAX,
     DEFAULT_PRICE_VAT_PERCENT,
     DEFAULT_TRIGGER_EXPORT_PERCENTAGE,
     DEFAULT_TRIGGER_METER_ENABLED,
 )
-
-
 
 
 class PriceStrategy(StrEnum):
@@ -56,7 +54,9 @@ class GrowattControlSettings:
     default_meter_enabled: bool = DEFAULT_METER_ENABLED
 
     price_automation_enabled: bool = DEFAULT_PRICE_AUTOMATION_ENABLED
-    price_strategy: PriceStrategy = PriceStrategy(DEFAULT_PRICE_STRATEGY)
+    price_strategy: PriceStrategy = field(
+        default_factory=lambda: PriceStrategy(DEFAULT_PRICE_STRATEGY)
+    )
     economic_2026_within_saldering: bool = DEFAULT_ECONOMIC_2026_WITHIN_SALDERING
     economic_recovery_margin: float = DEFAULT_ECONOMIC_RECOVERY_MARGIN
     price_sensor: str | None = None
