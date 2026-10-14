@@ -244,7 +244,7 @@ class GrowattApiClient:
                     self._truncate(result.body),
                 )
                 return result
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise GrowattRequestError(f"GET request timed out calling {url}") from exc
         except aiohttp.ClientError as exc:
             raise GrowattRequestError(f"GET request failed calling {url}: {exc}") from exc
@@ -296,7 +296,7 @@ class GrowattApiClient:
                     self._truncate(result.body),
                 )
                 return result
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise GrowattRequestError(f"POST request timed out calling {url}") from exc
         except aiohttp.ClientError as exc:
             raise GrowattRequestError(f"POST request failed calling {url}: {exc}") from exc
@@ -927,7 +927,7 @@ class GrowattApiClient:
                         f"Growatt returned HTTP {result.status} for {endpoint}: {self._truncate(result.body, 300)}"
                     )
                 return result
-            except (GrowattAuthError, GrowattRequestError, asyncio.TimeoutError, aiohttp.ClientError) as exc:
+            except (TimeoutError, GrowattAuthError, GrowattRequestError, aiohttp.ClientError) as exc:
                 last_error = exc
                 _LOGGER.warning(
                     "Growatt request attempt %s/%s failed for %s: %s",
@@ -991,7 +991,7 @@ class GrowattApiClient:
                         if key.lower() in {"content-type", "location", "server"}
                     },
                 )
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise GrowattRequestError(f"Request timed out calling {endpoint}") from exc
         except aiohttp.ClientError as exc:
             raise GrowattRequestError(f"Request failed calling {endpoint}: {exc}") from exc
