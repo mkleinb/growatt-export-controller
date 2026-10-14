@@ -95,9 +95,12 @@ class GrowattExportControllerCoordinator(DataUpdateCoordinator[GrowattController
         self._price_time_unsub: Any = None
 
     def _publish_state(self, **changes: object) -> None:
+        """Publish state without postponing telemetry or changing poll health."""
         self._state = replace(self._state, **changes)
         self.data = self._state
-        self.async_set_updated_data(self._state)
+        # Price/status updates must not reset the five-minute telemetry timer.
+        # The scheduled refresh owns last_update_success and error recovery.
+        self.async_update_listeners()
 
     @staticmethod
     def _response_text(result: GrowattCommandResult) -> str:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
 from .models import (
@@ -103,7 +103,7 @@ def _parse_datetime(value: object) -> datetime | None:
         return None
 
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return parsed
 
 
@@ -160,7 +160,7 @@ def extract_current_tax_excluded_price(
     if not isinstance(forecast, Sequence) or isinstance(forecast, (str, bytes)):
         return None
 
-    now_cmp = now if now.tzinfo is not None else now.replace(tzinfo=timezone.utc)
+    now_cmp = now if now.tzinfo is not None else now.replace(tzinfo=UTC)
     candidates: list[tuple[datetime | None, datetime | None, Mapping[str, Any]]] = []
     for raw_item in forecast:
         if not isinstance(raw_item, Mapping):
@@ -185,7 +185,7 @@ def extract_current_tax_excluded_price(
     # Some older integrations expose only a start time. Use the latest started
     # forecast row in that case.
     started = [entry for entry in candidates if entry[0] is not None and entry[0] <= now_cmp]
-    started.sort(key=lambda entry: entry[0] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    started.sort(key=lambda entry: entry[0] or datetime.min.replace(tzinfo=UTC), reverse=True)
     for _, _, item in started:
         value = _tax_excluded_from_item(item)
         if value is not None:
